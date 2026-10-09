@@ -10,6 +10,17 @@ from cachekat.models import Finding, Risk
 from cachekat.registry import register
 
 
+def test_version_flag_reports_package_version(capsys: pytest.CaptureFixture[str]):
+    """`cachekat --version` must agree with the package version — version
+    info lives in exactly one place (`cachekat.__version__`)."""
+    from cachekat import __version__
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+    assert exc.value.code == 0
+    assert __version__ in capsys.readouterr().out
+
+
 def test_scan_json_is_parseable(capsys: pytest.CaptureFixture[str]):
     rc = main(["scan", "--json"])
     out = capsys.readouterr().out

@@ -3,6 +3,16 @@
 All notable changes to CacheKat are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.11] — 2026-10-09
+
+### Added
+- `cachekat --version` — the CLI now reports the package version from the
+  single source `cachekat.__version__`.
+
+### Changed
+- CHANGELOG: the 0.2.0 -> 0.4.8 jump is now annotated (versions in between
+  were internal iterations, never published).
+
 ## [0.4.10] — 2026-10-09
 
 ### Changed
@@ -19,6 +29,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   too; roadmap entries no longer use internal milestone codes.
 
 ## [0.4.8] — 2026-10-09 — first PyPI release
+
+(Versions 0.2.1–0.4.7 were internal iterations during development and were
+never published; everything they shipped is folded into this entry.)
 
 ### Fixed
 - **zh-Windows docker crash (a real incident)**: docker output was decoded

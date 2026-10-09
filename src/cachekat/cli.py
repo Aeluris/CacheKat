@@ -11,7 +11,7 @@ import json
 import sys
 from dataclasses import asdict
 
-from cachekat import probes  # noqa: F401  (probe registration by import)
+from cachekat import __version__, probes  # noqa: F401  (probe registration by import)
 from cachekat.i18n import resolve_lang, set_lang, t
 from cachekat.models import Finding, Risk
 from cachekat.registry import run_scan
@@ -63,6 +63,9 @@ def main(argv: list[str] | None = None) -> int:
         prog="cachekat",
         description="See which dev caches eat your disk. Scans are read-only; "
         "cleaning is always an explicit, confirmed choice.",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     sub = parser.add_subparsers(dest="command", required=True)
     p_scan = sub.add_parser("scan", help="read-only scan and report")
