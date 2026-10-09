@@ -41,7 +41,9 @@ A read-only-first TUI that shows which dev caches eat the disk
 - M1 probes: docker / npm / playwright (fake-path unit tests per probe) — DONE
 - M2 TUI: textual app, selection, confirmation, dry-run, actions layer — DONE
 - M3 open-source prep: README EN/中文 + screenshots + lifecycle diagram, LICENSE (MIT), CONTRIBUTING — DONE
-- M4 public release: PyPI packages shipped; repo flip to public + topics + announcement — PENDING
+- M4 public release: PyPI packages shipped, repo flipped public with branch
+  ruleset, read-only workflow token, security features — DONE (topics and
+  any announcement optional)
 - Next up: per-image selection, more cache families (cargo, gradle, ...)
 
 (The roadmap lives HERE, not in the README — the README shows the lifecycle
