@@ -25,9 +25,8 @@ A read-only-first TUI that shows which dev caches eat the disk
    the worst offense in this repo.
 3. **Tests green before commit.** `ruff check src tests && pytest -q` must
    pass locally. CI runs the same on ubuntu + windows, Python 3.10/3.12.
-4. **Zero runtime deps until M2.** The only allowed runtime dependency from
-   M2 on is `textual`. Everything else: standard library. Adding a dep needs
-   an explicit reason in the PR.
+4. **`textual` is the only allowed runtime dependency.** Everything else:
+   standard library. Adding a dep needs an explicit reason in the PR.
 5. **Data shapes are explicit.** Cross-boundary data = dataclasses from
    `models.py` (`Finding`, `Risk`). No magic strings — risk levels are enum
    members, probe ids are checked at registration.
@@ -35,22 +34,14 @@ A read-only-first TUI that shows which dev caches eat the disk
    (`registry.register`); CLI/TUI consume via `run_scan()`/`all_probes()`
    only. No probe imports from the CLI layer.
 
-## Workflow per milestone (one acceptance gate each, no skipping)
+## Roadmap
 
-- M0 skeleton: registry + `cachekat scan` + pip probe + CI — DONE
-- M1 probes: docker / npm / playwright (fake-path unit tests per probe) — DONE
-- M2 TUI: textual app, selection, confirmation, dry-run, actions layer — DONE
-- M3 open-source prep: README EN/中文 + screenshots + lifecycle diagram, LICENSE (MIT), CONTRIBUTING — DONE
-- M4 public release: PyPI packages shipped; repo flip to public + topics + announcement — PENDING
-- Next up: per-image selection, more cache families (cargo, gradle, ...)
+- Per-image selection, more cache families (cargo, gradle, ...)
 
-(The roadmap lives HERE, not in the README — the README shows the lifecycle
-sequence diagram instead; roadmap is internal dev planning.)
-
-Note (M2+): textual is the single runtime dependency. TUI tests use Textual's
-headless Pilot via `App.run_test` wrapped in `asyncio.run` — no pytest-asyncio
-needed. `actions.clean(finding)` is the ONLY sanctioned entry to destructive
-operations; its refusal of REPORT_ONLY is the safety contract, do not bypass.
+Note: TUI tests use Textual's headless Pilot via `App.run_test` wrapped in
+`asyncio.run` — no pytest-asyncio needed. `actions.clean(finding)` is the
+ONLY sanctioned entry to destructive operations; its refusal of REPORT_ONLY
+is the safety contract, do not bypass.
 
 ## Conventions
 
