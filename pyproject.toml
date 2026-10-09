@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cachekat"
+version = "0.4.8"
+description = "A TUI to see which dev caches eat your disk - and reclaim space safely, risk-graded."
+readme = "README.md"
+requires-python = ">=3.10"
+# textual is the single runtime dependency; everything else stdlib
+dependencies = ["textual>=1.0"]
+license = {text = "MIT"}
+keywords = ["cache", "disk-space", "tui", "docker", "textual", "cleanup"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Filesystems",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://github.com/Aeluris/CacheKat"
+Issues = "https://github.com/Aeluris/CacheKat/issues"
+Changelog = "https://github.com/Aeluris/CacheKat/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+cachekat = "cachekat.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
