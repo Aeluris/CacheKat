@@ -122,7 +122,7 @@ def test_consequence_wording_covers_all_cleanable_families():
     bc_f = Finding("docker/build-cache", "bc", 1, "d", Risk.CLEANABLE)
     assert "ORPHANED" in consequence(bc_f)
     ct_f = Finding("docker/container/test-bench", "c", 1, "d", Risk.CLEANABLE)
-    # hard requirement from the 2026-10-08 incident: the warning must say
+    # hard requirement from the real incident: the warning must say
     # container-itself, not cache
     assert "CONTAINER ITSELF" in consequence(ct_f)
 

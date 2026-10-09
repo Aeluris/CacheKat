@@ -69,7 +69,7 @@ def _rmtree_action(finding: Finding, dry_run: bool) -> ActionResult:
 
 
 # docker prunes: -f skips their interactive prompt; our TUI is the prompt.
-# 2026-10-08 incident: image prune -a / container prune are indiscriminate
+# A real incident: image prune -a / container prune are indiscriminate
 # ("unused"/"stopped" != unwanted — a user's persistent test bench was
 # pruned). Both docker rows are REPORT_ONLY now; only build cache (true
 # cache semantics) remains cleanable here.
@@ -81,7 +81,7 @@ _DOCKER_ACTIONS = {
 }
 
 # what each clean actually does, in plain words — the confirm modal shows
-# these BEFORE anything runs (2026-10-08 lesson: item names alone don't warn).
+# these BEFORE anything runs (hard lesson: item names alone don't warn).
 # Wording lives in cachekat.i18n (en source of truth, zh table).
 _CONSEQUENCE_KEYS = {
     keys.PIP_CACHE: "cons_pip",

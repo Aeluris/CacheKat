@@ -40,7 +40,7 @@ def test_resolve_lang_explicit_and_env(monkeypatch):
 
 
 def test_consequence_bilingual_warning_intact():
-    # hard requirement from the 2026-10-08 incident, in BOTH languages:
+    # hard requirement from the real incident, in BOTH languages:
     # the container warning must say container-itself, not cache
     from cachekat.actions import consequence
     from cachekat.models import Finding, Risk

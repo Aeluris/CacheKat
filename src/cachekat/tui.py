@@ -46,7 +46,7 @@ def _fit_row(label: str, size: str, width: int) -> Text:
     """One selection-list row: `~ label  size`, measured in display cells.
 
     Long labels ellipsize; the size column stays visible — a row without its
-    price tag is a lie (2026-10-09 user report: container rows overran the
+    price tag is a lie (user report: container rows overran the
     left panel edge). Full label still shows in the confirm modal."""
     marker = Text("~ ", style="green")
     size_txt = Text(size, style="dim")
@@ -136,7 +136,7 @@ class CacheKatApp(App[None]):
         super().__init__()
         # Localize the footer bindings. Class BINDINGS are merged and baked
         # at class-creation time (__init_subclass__), so swapping the class
-        # attribute does nothing (2026-10-08 real-world miss). The instance
+        # attribute does nothing (a real-world miss). The instance
         # _bindings map is OUR copy — REBUILD it from the current one,
         # preserving every built-in (ctrl+p palette, ctrl+q quit, ...) and
         # only replacing our six descriptions.
@@ -175,7 +175,7 @@ class CacheKatApp(App[None]):
                 yield DataTable(id="report")
         yield Static(t("log_label"), id="log-label")
         yield RichLog(id="log", markup=True)
-        # the real Footer (restored 2026-10-08, second attempt): clickable
+        # the real Footer (restored on a second attempt): clickable
         # bindings + built-in command palette button (^p) — the Static keybar
         # placeholder could not do either
         yield Footer()
@@ -216,7 +216,7 @@ class CacheKatApp(App[None]):
                 table.add_row(f.label, human_size(f.size_bytes), f.detail, key=f.key)
         # probe crash reports ALSO land in the log panel: the table's note
         # column truncates ("AttributeErro"…), the log shows the whole line
-        # with the raise site (2026-10-09 Windows case)
+        # with the raise site (a real Windows case)
         log = self.query_one("#log", RichLog)
         for f in findings:
             if f.is_error:
@@ -242,7 +242,7 @@ class CacheKatApp(App[None]):
         self.query_one("#summary", Static).update(text)
 
     def _selected_keys(self) -> list[str]:
-        # no blanket except here (audit 2026-10-08): a failing query means a
+        # no blanket except here (audit): a failing query means a
         # real bug (widget missing) and must crash loudly, not silently
         # behave as "nothing selected"
         sel = self.query_one("#cleanable", SelectionList).selected
@@ -279,7 +279,7 @@ class CacheKatApp(App[None]):
             return
         size = human_size(sum(f.size_bytes for f in chosen))
         verb = t("confirm_dry") if self._dry else t("confirm_real")
-        # 2026-10-08 lesson: item names alone don't warn — every line carries
+        # Hard lesson: item names alone don't warn — every line carries
         # a plain-words consequence from actions.consequence()
         lines = "\n".join(
             f"~ {f.label}（{human_size(f.size_bytes)}）\n    ↳ {consequence(f)}"

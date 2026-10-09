@@ -18,8 +18,8 @@ A read-only-first TUI that shows which dev caches eat the disk
    individually selected findings, each carrying the "docker rm deletes the
    CONTAINER ITSELF, not a cache" warning, and the action uses `docker rm`
    WITHOUT -f so a container started after the scan refuses naturally
-   (2026-10-08 incident: a blanket container prune killed a persistent test
-   bench; per-item + loud warnings is the fix mandated after the incident).
+   (a real incident: a blanket container prune killed a persistent test
+   bench; per-item + loud warnings is the fix mandated after it).
 2. **No silent stubs.** A probe that cannot run must surface as an error
    Finding (see `registry.run_scan`). Swallowing exceptions to look green is
    the worst offense in this repo.
@@ -37,11 +37,11 @@ A read-only-first TUI that shows which dev caches eat the disk
 
 ## Workflow per milestone (one acceptance gate each, no skipping)
 
-- M0 skeleton: registry + `cachekat scan` + pip probe + CI — DONE 2026-10-08
-- M1 probes: docker / npm / playwright (fake-path unit tests per probe) — DONE 2026-10-08
-- M2 TUI: textual app, selection, confirmation, dry-run, actions layer — DONE 2026-10-08
-- M3 open-source prep: README EN/中文 + screenshots + lifecycle diagram, LICENSE (MIT), CONTRIBUTING — DONE 2026-10-09
-- M4 public release: PyPI 0.4.9 DONE 2026-10-09; repo flip to public + topics + announcement — PENDING
+- M0 skeleton: registry + `cachekat scan` + pip probe + CI — DONE
+- M1 probes: docker / npm / playwright (fake-path unit tests per probe) — DONE
+- M2 TUI: textual app, selection, confirmation, dry-run, actions layer — DONE
+- M3 open-source prep: README EN/中文 + screenshots + lifecycle diagram, LICENSE (MIT), CONTRIBUTING — DONE
+- M4 public release: PyPI packages shipped; repo flip to public + topics + announcement — PENDING
 - Next up: per-image selection, more cache families (cargo, gradle, ...)
 
 (The roadmap lives HERE, not in the README — the README shows the lifecycle

@@ -16,7 +16,7 @@ from cachekat.tui import CacheKatApp, ConfirmModal, _fit_row  # noqa: E402
 
 
 def test_fit_row_ellipsizes_but_keeps_size():
-    """The row's price tag must survive; only the label shrinks (2026-10-09
+    """The row's price tag must survive; only the label shrinks (a real
     panel-overrun report). Measured in display cells — CJK counts double."""
     long_label = "容器：worldtreeapp-n8n-1（docker.n8n.io/n8nio/n8n:latest）"
     row = _fit_row(long_label, "191.1 MiB", 40)
@@ -79,7 +79,7 @@ def test_confirm_then_dry_run_leaves_disk_alone(tmp_path: Path):
 
 
 def test_footer_bindings_localized_and_palette_kept(tmp_path: Path):
-    # regression (2026-10-08 zh-footer incident): class BINDINGS are baked at
+    # regression (a real zh-footer incident): class BINDINGS are baked at
     # class creation, localization happens on the instance _bindings copy —
     # this pins BOTH the mechanism and the ctrl+p built-in it must preserve
     async def scenario() -> tuple[set[str], bool]:
@@ -112,7 +112,7 @@ def test_cancel_cleans_nothing(tmp_path: Path):
 
 def test_probe_crash_reported_in_log_panel(tmp_path: Path):
     """A crashed probe must be visible in FULL in the log panel — the table's
-    note column truncates, the log doesn't (2026-10-09 Windows case)."""
+    note column truncates, the log doesn't (a real Windows case)."""
 
     def with_crash() -> list[Finding]:
         return _fake_findings(tmp_path) + [

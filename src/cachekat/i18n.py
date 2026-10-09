@@ -1,4 +1,4 @@
-"""Single home for every user-facing string (2026-10-08 design decision).
+"""Single home for every user-facing string (standing design decision).
 
 Rules:
 - ALL UI copy goes through `t()` — hardcoded user-facing text is a review
@@ -206,7 +206,7 @@ _STRINGS: dict[str, dict[str, str]] = {
 
 def _windows_prefers_zh() -> bool:
     """Ask Windows directly: GetUserDefaultUILanguage LANGID, primary
-    language 0x04 = Chinese (2026-10-08 real-world bug: cmd sets no LANG and
+    language 0x04 = Chinese (a real-world bug: cmd sets no LANG and
     locale.getlocale() returns (None, None) — auto never resolved zh)."""
     if sys.platform != "win32":
         return False

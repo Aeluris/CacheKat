@@ -36,7 +36,7 @@ def all_probes() -> Iterable[tuple[str, ProbeFn]]:
 def _crash_detail(exc: Exception) -> str:
     """One-line crash report: exception type, raise site, message.
 
-    2026-10-09 real-world case: a probe crashed on a Windows machine and the
+    Real-world case: a probe crashed on a Windows machine and the
     TUI's narrow table column truncated the detail to "AttributeErro" —
     invisible WHERE. The raise site (file:line in func) makes the next
     screenshot self-sufficient."""

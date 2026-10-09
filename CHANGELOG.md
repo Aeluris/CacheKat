@@ -21,7 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.4.8] — 2026-10-09 — first PyPI release
 
 ### Fixed
-- **zh-Windows docker crash (2026-10-09 incident)**: docker output was decoded
+- **zh-Windows docker crash (a real incident)**: docker output was decoded
   with the locale codec (cp936); a non-ASCII byte sequence in `docker ps`
   JSON crashed the hidden Windows pipe-reader thread — communicate() swallows
   that exception and returns stdout=None, so the probe died with a cryptic

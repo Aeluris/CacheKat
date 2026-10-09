@@ -97,7 +97,7 @@ def test_probe_daemon_down_is_report_only():
 
 
 def test_probe_liar_stdout_none_raises_loud():
-    """2026-10-09 incident, pinned: rc=0 + stdout=None (Windows reader
+    """Real incident, pinned: rc=0 + stdout=None (Windows reader
     thread swallowed a GBK decode crash) must fail LOUDLY, not as a cryptic
     'NoneType has no attribute splitlines' downstream."""
     import pytest
@@ -127,7 +127,7 @@ def test_run_declares_utf8_explicitly(monkeypatch):
 
 
 def test_container_label_drops_registry_host():
-    """Long registry hosts were panel overruns (2026-10-09); labels carry
+    """Long registry hosts were panel overruns (real user report); labels carry
     repo:tag only."""
     ps = (
         '{"Names":"worldtreeapp-n8n-1","Image":'

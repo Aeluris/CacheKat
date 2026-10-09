@@ -45,6 +45,6 @@ def test_resolve_falls_back_when_npm_missing(monkeypatch):
     monkeypatch.setattr("sys.platform", "linux")
     monkeypatch.setenv("HOME", "/home/fakeuser")
     # Path.home() on Windows resolves USERPROFILE, not HOME — set both so the
-    # test is honest on every platform (CI 2026-10-08 windows cells were red)
+    # test is honest on every platform (CI Windows cells were once red)
     monkeypatch.setenv("USERPROFILE", "/home/fakeuser")
     assert resolve_cache_dir(runner=boom) == Path("/home/fakeuser") / ".npm"

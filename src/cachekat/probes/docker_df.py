@@ -35,7 +35,7 @@ def _run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
     # default locale codec (cp936 on zh-Windows) a non-ASCII byte sequence
     # crashes the hidden Windows reader thread inside communicate() — the
     # exception is swallowed by the thread and we get stdout=None, rc=0
-    # (2026-10-09 real-machine incident, see tests/test_docker_probe.py).
+    # (a real-machine incident, see tests/test_docker_probe.py).
     return subprocess.run(
         cmd, capture_output=True, text=True,
         encoding="utf-8", errors="replace", timeout=_DF_TIMEOUT,
@@ -123,7 +123,7 @@ _PS_CMD = ["docker", "ps", "-a", "-s", "--format", "{{json .}}"]
 
 def _short_image(image: str) -> str:
     """'docker.n8n.io/n8nio/n8n:latest' -> 'n8n:latest' — registry hosts
-    are noise in a list row (2026-10-09 user report: rows overran the
+    are noise in a list row (user report: rows overran the
     panel). The TUI ellipsizes too, but labels shouldn't START at hopeless."""
     return image.rsplit("/", 1)[-1]
 
@@ -131,7 +131,7 @@ def _short_image(image: str) -> str:
 def _container_findings(run: RunFn) -> list[Finding]:
     """One finding per stopped container, each CLEANABLE but individually
     chosen. The warning is load-bearing: docker rm removes the CONTAINER
-    ITSELF, not a cache (2026-10-08 incident, explicit design decision)."""
+    ITSELF, not a cache (a real incident, explicit design decision)."""
     try:
         cp = run(_PS_CMD)
     except subprocess.TimeoutExpired:
@@ -183,7 +183,7 @@ def _container_findings(run: RunFn) -> list[Finding]:
 
 def _stdout_or_raise(cp: subprocess.CompletedProcess[str], cmd_name: str) -> str:
     """rc=0 with stdout=None is a LIE: communicate() swallows reader-thread
-    crashes (the 2026-10-09 zh-Windows GBK decode incident). Refuse to guess."""
+    crashes (a real zh-Windows GBK decode incident). Refuse to guess."""
     if cp.stdout is None:
         msg = (
             f"{cmd_name} exited rc={cp.returncode!r} but stdout is None — "

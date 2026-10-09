@@ -46,7 +46,7 @@ def test_run_scan_surfaces_probe_crash_as_finding():
     assert err and "exploded" in err[0].detail
     assert err[0].risk is Risk.REPORT_ONLY
     # crash detail must be self-sufficient: exception type + raise site
-    # (2026-10-09: a Windows AttributeError was truncated to "AttributeErro"
+    # (a real case: a Windows AttributeError was truncated to "AttributeErro"
     # by the TUI column — where it happened stayed invisible)
     assert "RuntimeError" in err[0].detail
     assert "@test_cli.py:" in err[0].detail
