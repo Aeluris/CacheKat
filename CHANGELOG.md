@@ -3,6 +3,13 @@
 All notable changes to CacheKat are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.10] — 2026-10-09
+
+### Changed
+- README (en/zh): internal roadmap section replaced by a "How it works"
+  lifecycle sequence diagram (bilingual, rendered from Mermaid); dev roadmap
+  moved to AGENTS.md where it belongs.
+
 ## [0.4.9] — 2026-10-09
 
 ### Changed

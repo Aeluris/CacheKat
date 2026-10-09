@@ -61,14 +61,17 @@ cachekat scan --json     # machine-readable
 Docker rows need the docker daemon running — if the TUI shows
 `docker daemon unreachable`, start Docker Desktop and press `r` to rescan.
 
-## Roadmap
+## How it works
 
-- [x] Core: probe registry, `scan` CLI, pip probe, CI (Windows + Linux)
-- [x] docker / npm / playwright probes (orphan detection, volumes red-lined)
-- [x] Textual TUI: select, confirm, clean, dry-run
-- [x] Per-container selection with loud not-a-cache warnings
-- [x] i18n: full en/zh, `--lang auto|en|zh`
-- [ ] Per-image selection, more cache families (cargo, gradle, ...)
+```text
+scan (read-only) → risk-grade → select → confirm → clean
+```
+
+Every step funnels through explicit safety gates — probes crash into visible
+error rows, data lands in report-only, cleaning needs an explicit yes, and
+dry-run rehearses with the disk untouched:
+
+![lifecycle](https://raw.githubusercontent.com/Aeluris/CacheKat/main/docs/diagrams/lifecycle-en.png)
 
 See [CHANGELOG.md](CHANGELOG.md) for details, [CONTRIBUTING.md](CONTRIBUTING.md)
 to help, [AGENTS.md](AGENTS.md) for the engineering rulebook.

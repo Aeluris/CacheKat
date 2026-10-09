@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cachekat"
-version = "0.4.9"
+version = "0.4.10"
 description = "A TUI to see which dev caches eat your disk - and reclaim space safely, risk-graded."
 readme = "README.md"
 requires-python = ">=3.10"

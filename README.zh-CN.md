@@ -57,14 +57,16 @@ cachekat scan --json     # 机器可读
 docker 相关行需要守护进程在运行——TUI 显示 `docker daemon unreachable`
 时，启动 Docker Desktop 后按 `r` 重扫即可。
 
-## 路线图
+## 工作原理
 
-- [x] 内核：探针注册表、`scan` CLI、pip 探针、CI（Windows + Linux）
-- [x] docker / npm / playwright 探针（孤儿检测、卷红线）
-- [x] Textual TUI：勾选、确认、清理、干跑
-- [x] 逐容器勾选＋“本体非缓存”警示
-- [x] i18n：en/zh 全量，`--lang auto|en|zh`
-- [ ] 逐镜像勾选、更多缓存家族（cargo、gradle、…）
+```text
+扫描（只读）→ 风险分级 → 勾选 → 确认门 → 清理
+```
+
+每一步都过显式的安全闸门——探针崩溃变成可见错误行、数据只落"只报不动"、
+清理必须显式点头、干跑彩排时磁盘分毫不动：
+
+![工作原理](https://raw.githubusercontent.com/Aeluris/CacheKat/main/docs/diagrams/lifecycle-zh.png)
 
 详见 [CHANGELOG.md](CHANGELOG.md)；想参与看 [CONTRIBUTING.md](CONTRIBUTING.md)
 （中文版待补）；工程规则在 [AGENTS.md](AGENTS.md)。

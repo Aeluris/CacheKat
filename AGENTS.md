@@ -40,8 +40,12 @@ A read-only-first TUI that shows which dev caches eat the disk
 - M0 skeleton: registry + `cachekat scan` + pip probe + CI — DONE 2026-10-08
 - M1 probes: docker / npm / playwright (fake-path unit tests per probe) — DONE 2026-10-08
 - M2 TUI: textual app, selection, confirmation, dry-run, actions layer — DONE 2026-10-08
-- M3 open-source prep: README EN/中文, GIF, LICENSE (MIT), CONTRIBUTING
-- M4 public flip: v0.1.0 tag, topics, announcement
+- M3 open-source prep: README EN/中文 + screenshots + lifecycle diagram, LICENSE (MIT), CONTRIBUTING — DONE 2026-10-09
+- M4 public release: PyPI 0.4.9 DONE 2026-10-09; repo flip to public + topics + announcement — PENDING
+- Next up: per-image selection, more cache families (cargo, gradle, ...)
+
+(The roadmap lives HERE, not in the README — the README shows the lifecycle
+sequence diagram instead; roadmap is internal dev planning.)
 
 Note (M2+): textual is the single runtime dependency. TUI tests use Textual's
 headless Pilot via `App.run_test` wrapped in `asyncio.run` — no pytest-asyncio
