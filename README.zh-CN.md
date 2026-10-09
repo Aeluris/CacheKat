@@ -2,22 +2,21 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
+[![ci](https://github.com/Aeluris/CacheKat/actions/workflows/ci.yml/badge.svg)](https://github.com/Aeluris/CacheKat/actions/workflows/ci.yml)
+[![pypi](https://img.shields.io/pypi/v/cachekat?label=PyPI)](https://pypi.org/project/cachekat/)
+[![python](https://img.shields.io/pypi/pyversions/cachekat)](https://pypi.org/project/cachekat/)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 > 一条 TUI 看清开发机的磁盘都被哪些缓存吃了——按风险分级安全回收。
 > **永远不碰你的数据。**
 
-**主界面**——左侧可清项（space 勾选、`c` 执行）；右侧只报不动的事实
-（docker 卷、活性未知项）看得见摸不得——布局本身就在讲安全模型：
+**主界面**（左：可清项，`space` 勾选、`c` 执行；右：只报不动的事实，
+看得见摸不得——布局本身就在讲安全模型）与**确认门**（不点头绝不清理；
+每条写明后果；干跑 `d` 彩排，磁盘分毫不动）：
 
-![主界面](docs/screenshots/zh-main.png)
-
-**确认门**——不点头绝不清理；每一项都带大小与后果的平实说明，干跑
-（`d`）只描述会发生什么，磁盘分毫不动：
-
-![确认门](docs/screenshots/zh-confirm.png)
-
-[![ci](https://github.com/Aeluris/CacheKat/actions/workflows/ci.yml/badge.svg)](https://github.com/Aeluris/CacheKat/actions/workflows/ci.yml)
-[![python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
-[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+| 主界面 | 确认门 |
+|:---:|:---:|
+| ![主界面](https://raw.githubusercontent.com/Aeluris/CacheKat/main/docs/screenshots/zh-main.png) | ![确认门](https://raw.githubusercontent.com/Aeluris/CacheKat/main/docs/screenshots/zh-confirm.png) |
 
 ## 为什么做
 
@@ -32,7 +31,7 @@
 | 真缓存（pip、npm、playwright 孤儿、docker 构建缓存） | 可勾选清理——每条在执行前都写明白人话后果 |
 | **docker 卷（你的数据）** | **只报不动，永不清理，没有旗标能解锁** |
 | docker 停止容器／未用镜像 | 容器：**逐个勾选**，每条警示 `docker rm` 删除的是容器**本体**而非缓存（可用 `docker run`/`compose up` 重建，卷不受影响）。镜像：逐镜像勾选上线前只报不动。 |
-| 探针判不了的 | 诚实只报（"判不了活性"），绝不瞎猜 |
+| 探针判不了的 | 诚实只报（“判不了活性”），绝不瞎猜 |
 
 - 扫描永远只读；清理必须是显式勾选＋确认门。
 - 干跑模式（`d`）：先彩排会发生什么——磁盘分毫不动。
@@ -60,10 +59,10 @@ docker 相关行需要守护进程在运行——TUI 显示 `docker daemon unrea
 
 ## 路线图
 
-- [x] M0 — 骨架、注册表、`scan` CLI、pip 探针、CI（win+linux）
-- [x] M1 — docker / npm / playwright 探针（孤儿检测、卷红线）
-- [x] M2 — Textual TUI：勾选、确认、清理、干跑
-- [x] 逐容器勾选＋"本体非缓存"警示
+- [x] 内核：探针注册表、`scan` CLI、pip 探针、CI（Windows + Linux）
+- [x] docker / npm / playwright 探针（孤儿检测、卷红线）
+- [x] Textual TUI：勾选、确认、清理、干跑
+- [x] 逐容器勾选＋“本体非缓存”警示
 - [x] i18n：en/zh 全量，`--lang auto|en|zh`
 - [ ] 逐镜像勾选、更多缓存家族（cargo、gradle、…）
 

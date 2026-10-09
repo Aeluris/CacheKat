@@ -3,6 +3,14 @@
 All notable changes to CacheKat are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.9] — 2026-10-09
+
+### Changed
+- README (en/zh): badge row moved under the title and extended with a PyPI
+  version badge and a pyversions badge; the two screenshots now sit
+  side-by-side and reference absolute URLs so they render on the PyPI page
+  too; roadmap entries no longer use internal milestone codes.
+
 ## [0.4.8] — 2026-10-09 — first PyPI release
 
 ### Fixed
