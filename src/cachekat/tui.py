@@ -42,6 +42,13 @@ from cachekat.registry import run_scan
 FindingsFn = Callable[[], list[Finding]]
 
 
+def _indent_consequence(text: str) -> list[str]:
+    """Consequence copy is often multi-line now (vhdx warnings); every
+    line keeps the ↳ alignment so the modal reads as a tidy block."""
+    lines = text.split("\n")
+    return [f"    ↳ {lines[0]}"] + [f"      {ln}" for ln in lines[1:]]
+
+
 def _fit_row(label: str, size: str, width: int) -> Text:
     """One selection-list row: `~ label  size`, measured in display cells.
 
@@ -204,11 +211,23 @@ class CacheKatApp(App[None]):
         sel = self.query_one("#cleanable", SelectionList)
         sel.clear_options()
         panel_w = sel.size.width or 60  # 0 before first layout — sane fallback
+        preselected: list[str] = []
         for f in findings:
-            if f.risk is Risk.CLEANABLE:
+            # left panel: selectable findings. CLEANABLE + MAINTENANCE —
+            # maintenance (vhdx compact) is data-loss-free, so it belongs
+            # in the selectable side; its special warnings live in the
+            # confirm gate (actions.consequence), not in the placement
+            if f.risk in (Risk.CLEANABLE, Risk.MAINTENANCE):
                 sel.add_option(
                     (_fit_row(f.label, human_size(f.size_bytes), panel_w), f.key)
                 )
+                # probe-graded low-risk rows start checked (dangling docker
+                # layers); the confirm gate below is unchanged — preselect
+                # is a default, not a bypass. MAINTENANCE never preselects.
+                if f.preselect:
+                    preselected.append(f.key)
+        for key in preselected:
+            sel.select(key)
         table = self.query_one("#report", DataTable)
         table.clear()
         for f in findings:
@@ -229,6 +248,7 @@ class CacheKatApp(App[None]):
         chosen = sum(
             f.size_bytes for f in self._findings if f.risk is Risk.CLEANABLE and f.key in selected
         )
+        maint = [f for f in self._findings if f.risk is Risk.MAINTENANCE]
         dry = t("dry_on") if self._dry else t("dry_off")
         text = t(
             "summary_line",
@@ -237,6 +257,15 @@ class CacheKatApp(App[None]):
             sel=human_size(chosen),
             dry=dry,
         )
+        if maint:
+            # maintenance sizes are the vhdx FILE size — what compacting
+            # returns is only the free space inside it, so the summary
+            # reports potential, honestly labelled
+            text += t(
+                "summary_maintenance",
+                n=len(maint),
+                size=human_size(sum(f.size_bytes for f in maint)),
+            )
         if extra:
             text += f"\n{extra}"
         self.query_one("#summary", Static).update(text)
@@ -272,17 +301,26 @@ class CacheKatApp(App[None]):
         chosen = [
             f
             for f in self._findings
-            if f.risk is Risk.CLEANABLE and f.key in self._selected_keys()
+            if f.risk in (Risk.CLEANABLE, Risk.MAINTENANCE)
+            and f.key in self._selected_keys()
         ]
         if not chosen:
             self.notify(t("notify_none_selected"), severity="information")
             return
         size = human_size(sum(f.size_bytes for f in chosen))
-        verb = t("confirm_dry") if self._dry else t("confirm_real")
+        if self._dry:
+            verb = t("confirm_dry")
+        elif any(f.risk is Risk.MAINTENANCE for f in chosen):
+            # a maintenance-only or mixed selection deletes nothing (the
+            # vhdx part) — the verb follows the content, never overstates
+            verb = t("confirm_exec")
+        else:
+            verb = t("confirm_real")
         # Hard lesson: item names alone don't warn — every line carries
         # a plain-words consequence from actions.consequence()
         lines = "\n".join(
-            f"~ {f.label}（{human_size(f.size_bytes)}）\n    ↳ {consequence(f)}"
+            f"~ {f.label}（{human_size(f.size_bytes)}）\n"
+            + "\n".join(_indent_consequence(consequence(f)))
             for f in chosen
         )
         self.push_screen(

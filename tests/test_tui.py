@@ -58,6 +58,98 @@ def test_app_renders_panels_and_summary(tmp_path: Path):
     assert "20 B" in summary  # two cleanable findings, 10 B each
 
 
+def test_preselected_findings_start_checked(tmp_path: Path):
+    """Probe-graded low-risk rows (dangling docker layers) start checked —
+    a DEFAULT, not a bypass: the user can uncheck, the confirm gate
+    still lists every consequence before anything runs."""
+
+    def provider() -> list[Finding]:
+        return [
+            Finding(
+                "docker/image/dd44ee55ff6", "docker dangling layer", 10,
+                "upgrade orphan", Risk.CLEANABLE, preselect=True,
+            ),
+            Finding(
+                "docker/image/aa11bb22cc3", "image: app:v1.2", 10,
+                "retired version", Risk.CLEANABLE,
+            ),
+            Finding("npm/cache", "npm cache", 10, "d", Risk.CLEANABLE, tmp_path),
+        ]
+
+    async def scenario() -> set[str]:
+        app = CacheKatApp(findings_provider=provider)
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            sel = app.query_one("#cleanable", SelectionList)
+            return set(sel.selected)
+
+    checked = asyncio.run(scenario())
+    assert checked == {"docker/image/dd44ee55ff6"}  # dangling yes, others no
+
+
+def test_maintenance_row_is_selectable_and_summarized(tmp_path: Path):
+    """MAINTENANCE (vhdx compact) sits in the LEFT panel like a cache —
+    the safety lives in the confirm gate, not the placement."""
+
+    def provider() -> list[Finding]:
+        return [
+            Finding(
+                "wsl/vhdx/docker_data", "Docker Desktop WSL2 磁盘（维护）", 3000,
+                "d", Risk.MAINTENANCE, path=tmp_path / "d.vhdx",
+            ),
+            Finding("docker/volumes", "docker volumes", 99, "docker", Risk.REPORT_ONLY),
+        ]
+
+    async def scenario() -> tuple[int, int, str]:
+        app = CacheKatApp(findings_provider=provider, lang="zh")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            sel = app.query_one("#cleanable", SelectionList)
+            summary = str(app.query_one("#summary").content)
+            table = app.query_one("#report", DataTable)
+            return len(sel.selected), table.row_count, summary
+
+    sel_count, rows, summary = asyncio.run(scenario())
+    assert sel_count == 0  # selectable but NOT pre-checked (heavy op)
+    assert rows == 1  # volumes stay in the report-only panel
+    assert "维护" in summary  # maintenance counted separately, honest label
+    assert "潜在" in summary  # potential-only, not promised space
+
+
+def test_confirm_modal_for_maintenance_uses_run_verb_and_tidy_lines(tmp_path: Path):
+    """Two regressions pinned (real user feedback): the modal used to say
+    '真删 33.1 GiB' for a compact that deletes NOTHING, and the multi-line
+    consequence wrapped ugly mid-sentence. Now: verb follows content,
+    warnings render one per line."""
+
+    def provider() -> list[Finding]:
+        return [
+            Finding(
+                "wsl/vhdx/docker_data", "Docker Desktop WSL2 磁盘（维护）", 3000,
+                "d", Risk.MAINTENANCE, path=tmp_path / "d.vhdx",
+            ),
+        ]
+
+    async def scenario() -> str:
+        app = CacheKatApp(findings_provider=provider, lang="zh")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await pilot.press("a")  # select all (the one maintenance row)
+            await pilot.press("c")  # open the confirm gate
+            await pilot.pause()
+            assert isinstance(app.screen, ConfirmModal)
+            from textual.widgets import Static
+
+            return str(app.screen.query_one(".msg", Static).content)
+
+    text = asyncio.run(scenario())
+    assert "执行 1 项" in text  # RUN, not DELETE — the verb follows content
+    assert "真删" not in text  # nothing is deleted in a compact
+    assert "不删任何数据" in text  # the honest promise leads the block
+    assert "⚠" in text  # warnings as their own lines
+    assert text.count("↳") == 1  # one arrow head, rest indented under it
+
+
 def test_confirm_then_dry_run_leaves_disk_alone(tmp_path: Path):
     async def scenario() -> tuple[bool, int, Path]:
         d = tmp_path / "victim"

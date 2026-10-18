@@ -34,7 +34,8 @@ safe to reclaim?**
 |---|---|
 | True caches (pip, npm, playwright orphans, docker build cache) | Selectable — each row states its plain-words consequence before anything runs |
 | **Docker volumes (your data)** | **Report-only. Never cleaned. No flag unlocks this.** |
-| Docker stopped containers / unused images | Containers: cleanable **one by one**, each warning that `docker rm` deletes the container **itself** (recreate via `docker run`/`compose up`; volumes untouched). Images: report-only until per-image selection ships. |
+| Docker stopped containers / retired images | Cleanable **one by one**. Containers: each row warns that `docker rm` deletes the container **itself** (recreate via `docker run`/`compose up`; volumes untouched). Images: dangling layers and extra versions of a repo are listed per image, each removed by its own `docker rmi` **without `-f`** — any image a container still references refuses removal on its own. |
+| **Docker Desktop WSL2 disk (vhdx) — maintenance** | Selectable, deletes NOTHING: compacting returns the free space inside the vhdx to Windows. The confirm gate warns (admin rights / every WSL distro stops / minutes). Tool runs the stop + writes a self-elevating script; running the script — with its own UAC consent — is your click, not ours. |
 | Anything the probe cannot judge | Honest report-only ("liveness unknown"), never a guess |
 
 - Every scan is read-only; cleaning is an explicit, confirmed selection.
@@ -55,6 +56,7 @@ Or from source: `pipx install git+https://github.com/Aeluris/CacheKat.git`
 cachekat tui             # interactive: scan -> select -> confirm -> clean
 cachekat scan            # read-only report: who eats the disk
 cachekat scan --json     # machine-readable
+cachekat vhdx            # Windows: Docker Desktop disk size + compact command list
 # every command accepts --lang auto|en|zh (auto follows the system language)
 ```
 

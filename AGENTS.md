@@ -12,14 +12,21 @@ A read-only-first TUI that shows which dev caches eat the disk
 ## Hard boundaries (violating any of these = the change is rejected)
 
 1. **Never auto-delete.** Every destructive action requires: user selection +
-   confirmation. `REPORT_ONLY` findings (Docker volumes, WSL vhdx, unused
-   images until per-image selection exists) are NEVER cleaned by the tool —
-   not behind a flag, not ever. Stopped containers are cleanable ONLY as
-   individually selected findings, each carrying the "docker rm deletes the
-   CONTAINER ITSELF, not a cache" warning, and the action uses `docker rm`
-   WITHOUT -f so a container started after the scan refuses naturally
-   (a real incident: a blanket container prune killed a persistent test
-   bench; per-item + loud warnings is the fix mandated after it).
+   confirmation. `REPORT_ONLY` findings (Docker volumes) are NEVER cleaned
+   by the tool — not behind a flag, not ever. Stopped containers are
+   cleanable ONLY as individually selected findings, each carrying the
+   "docker rm deletes the CONTAINER ITSELF, not a cache" warning, and the
+   action uses `docker rm` WITHOUT -f so a container started after the scan
+   refuses naturally (a real incident: a blanket container prune killed a
+   persistent test bench; per-item + loud warnings is the fix mandated after
+   it). Retired images follow the same contract per image: `docker rmi`
+   WITHOUT -f (referenced images refuse on their own), dangling rows may
+   start pre-checked but the confirm gate never changes. `MAINTENANCE`
+   findings (vhdx compact) delete NOTHING and must keep it that way: the
+   tool may run `wsl --shutdown` (after refusing while Docker Desktop
+   processes are alive — it never kills them) and WRITE a self-elevating
+   compact script, but the admin part is the user's click (the script's
+   own UAC prompt is the consent), never a tool-executed command.
 2. **No silent stubs.** A probe that cannot run must surface as an error
    Finding (see `registry.run_scan`). Swallowing exceptions to look green is
    the worst offense in this repo.
@@ -36,7 +43,7 @@ A read-only-first TUI that shows which dev caches eat the disk
 
 ## Roadmap
 
-- Per-image selection, more cache families (cargo, gradle, ...)
+- More cache families (cargo, gradle, ...)
 
 Note: TUI tests use Textual's headless Pilot via `App.run_test` wrapped in
 `asyncio.run` — no pytest-asyncio needed. `actions.clean(finding)` is the

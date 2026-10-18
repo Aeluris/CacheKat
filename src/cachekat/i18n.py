@@ -35,8 +35,8 @@ _STRINGS: dict[str, dict[str, str]] = {
     "key_rescan": {"en": "rescan", "zh": "重新扫描"},
     "key_quit": {"en": "quit", "zh": "退出"},
     "left_label": {
-        "en": "cleanable (select with space, run with c)",
-        "zh": "可清理（勾选后 c 执行）",
+        "en": "cleanable / maintenance (space to select, c to run)",
+        "zh": "可清理／维护（勾选后 c 执行）",
     },
     "right_label": {
         "en": "report-only (data / uncertain)",
@@ -47,6 +47,10 @@ _STRINGS: dict[str, dict[str, str]] = {
     "summary_line": {
         "en": "reclaimable total {size} · selected {n} items ({sel}) · {dry}",
         "zh": "可回收合计 {size} · 已选 {n} 项（{sel}）· {dry}",
+    },
+    "summary_maintenance": {
+        "en": " + maintenance {n} ({size}, potential)",
+        "zh": " ＋维护 {n}（{size}，潜在值）",
     },
     "dry_on": {
         "en": "dry-run ON (rehearse — nothing is deleted)",
@@ -63,6 +67,9 @@ _STRINGS: dict[str, dict[str, str]] = {
     },
     "confirm_dry": {"en": "dry-run", "zh": "干跑演示"},
     "confirm_real": {"en": "DELETE", "zh": "真删"},
+    # maintenance selections contain nothing deletable — saying "DELETE"
+    # there would be a lie (and scary); the verb follows the content
+    "confirm_exec": {"en": "RUN", "zh": "执行"},
     "confirm_title": {
         "en": "{verb} {n} items, ~{size}:",
         "zh": "{verb} {n} 项，约 {size}：",
@@ -129,15 +136,78 @@ _STRINGS: dict[str, dict[str, str]] = {
         "en": "{n} volumes — CacheKat never cleans volumes",
         "zh": "{n} 个卷——CacheKat 永不清理卷",
     },
-    "dock_images_label": {
-        "en": "docker unused images (report-only)",
-        "zh": "docker 未用镜像（只报）",
+    "dock_images_error_label": {
+        "en": "docker image listing failed",
+        "zh": "docker 镜像列表获取失败",
     },
-    "dock_images_detail": {
-        "en": "docker image prune -a would remove ALL unused images — "
-        "per-image selection pending; use `docker rmi` yourself meanwhile",
-        "zh": "docker image prune -a 会删掉全部未用镜像——逐镜像勾选待做；"
-        "需要清理请自己 `docker rmi` 挑着删",
+    "dock_images_failed": {
+        "en": "exited {rc} — image listing unavailable",
+        "zh": "退出码 {rc}——镜像列表不可用",
+    },
+    "dock_images_timeout": {
+        "en": "image listing timed out",
+        "zh": "镜像列表获取超时",
+    },
+    "dock_image_dangling_label": {
+        "en": "docker dangling layer ({id}…)",
+        "zh": "docker 悬空镜像层（{id}…）",
+    },
+    "dock_image_dangling_detail": {
+        "en": "untagged leftover layer, {since} old — typically the old "
+        "version of an image you upgraded; only cost is a possible re-pull",
+        "zh": "无标签残留层，{since} 前——通常是你升级后留下的旧版本；"
+        "代价顶多是需要时重拉",
+    },
+    "dock_image_label": {
+        "en": "image: {name}",
+        "zh": "镜像：{name}",
+    },
+    "dock_image_retired_detail": {
+        "en": "{repo} keeps {n} versions side by side (upgrade leftovers) — "
+        "check which one you run before removing; rmi without -f refuses "
+        "if any container still uses it",
+        "zh": "{repo} 同时存有 {n} 个版本（升级残留）——删前请确认在用的是哪个；"
+        "不带 -f 的 rmi 遇到容器仍在用会自然拒绝",
+    },
+    "cons_image": {
+        "en": "docker rmi — deletes this IMAGE (not a cache); if any "
+        "container still references it, the removal refuses (no -f used). "
+        "Re-pull anytime: docker pull <repo:tag>",
+        "zh": "docker rmi——删除该镜像本体（不是缓存）；仍有容器引用时"
+        "删除会被拒绝（不带 -f）。需要时随时 docker pull <repo:tag> 重拉",
+    },
+    "cons_vhdx_maintenance": {
+        "en": "compact: deletes NOTHING — returns the free space inside "
+        "the vhdx to Windows\n⚠ needs admin (the UAC prompt is your "
+        "consent)\n⚠ every WSL distro stops\n⚠ minutes on big disks — "
+        "do not interrupt\n→ tool stops WSL and writes the script; you "
+        "run it",
+        "zh": "压箱：不删任何数据——只把 vhdx 内部空隙还给 Windows\n"
+        "⚠ 需管理员权限（UAC 弹窗即授权）\n⚠ 全部 WSL 发行版将停止\n"
+        "⚠ 大磁盘耗时数分钟，勿中断\n→ 工具停机＋生成脚本；脚本由你运行",
+    },
+    "vhdx_act_docker_running": {
+        "en": "refused: Docker Desktop is running (its backend relaunches "
+        "WSL seconds later)\nquit it from the tray, rescan (r) — CacheKat "
+        "does not kill processes",
+        "zh": "已拒绝：Docker Desktop 在运行（后台会把 WSL 秒速拉回）\n"
+        "托盘退出后按 r 重扫再试——CacheKat 不杀进程",
+    },
+    "vhdx_act_dry": {
+        "en": "dry-run: would stop all WSL (wsl --shutdown), then write "
+        "{script}",
+        "zh": "干跑：将停全部 WSL（wsl --shutdown）→ 生成 {script}",
+    },
+    "vhdx_act_done": {
+        "en": "WSL stopped; script written:\n{script}\n"
+        "in PowerShell, run (right-click menu drops errors on the floor — "
+        "this way they stay visible):\npowershell -NoProfile "
+        '-ExecutionPolicy Bypass -File "{script}"\n'
+        "Docker Desktop starts normally on next launch",
+        "zh": "WSL 已停；脚本已生成：\n{script}\n"
+        "在 PowerShell 里运行此命令（右键运行会丢错误，命令行方式全程可见）：\n"
+        'powershell -NoProfile -ExecutionPolicy Bypass -File "{script}"\n'
+        "Docker Desktop 下次启动自行恢复",
     },
     "dock_build_label": {"en": "docker build cache", "zh": "docker 构建缓存"},
     "dock_build_detail": {
@@ -181,6 +251,60 @@ _STRINGS: dict[str, dict[str, str]] = {
     "dock_daemon_timeout_label": {
         "en": "docker daemon timed out",
         "zh": "docker 守护进程超时",
+    },
+    # --- wsl vhdx probe / cli ------------------------------------------------
+    "wsl_vhdx_label": {
+        "en": "Docker Desktop WSL2 disk (maintenance)",
+        "zh": "Docker Desktop WSL2 磁盘（维护）",
+    },
+    "wsl_vhdx_detail": {
+        "en": "{path} — compact = maintenance (nothing deleted), "
+        "selectable on the left",
+        "zh": "{path}——压箱＝维护（不删数据），左侧勾选执行",
+    },
+    "wsl_vhdx_cli_title": {
+        "en": "Docker Desktop WSL2 disk — compact command list",
+        "zh": "Docker Desktop WSL2 磁盘——压箱命令清单",
+    },
+    "wsl_vhdx_cli_found": {
+        "en": "disk: {path} — currently {size}",
+        "zh": "磁盘：{path}——当前 {size}",
+    },
+    "wsl_vhdx_cli_missing": {
+        "en": "no Docker Desktop vhdx found (is Docker Desktop installed?)",
+        "zh": "没找到 Docker Desktop 的 vhdx（装了 Docker Desktop 吗？）",
+    },
+    "wsl_vhdx_cli_windows_only": {
+        "en": "this command is Windows-only (Docker Desktop + WSL2)",
+        "zh": "该命令仅限 Windows（Docker Desktop + WSL2）",
+    },
+    "wsl_vhdx_cli_stop_warning": {
+        "en": "STEP 1 — compacting needs ALL of WSL and Docker Desktop "
+        "stopped (every distro, every container):",
+        "zh": "第 1 步——压箱需要停掉全部 WSL 与 Docker Desktop"
+        "（所有发行版、所有容器）：",
+    },
+    "wsl_vhdx_cli_step_shutdown": {
+        "en": "quit Docker Desktop from the tray, then: wsl --shutdown",
+        "zh": "先在托盘退出 Docker Desktop，然后执行：wsl --shutdown",
+    },
+    "wsl_vhdx_cli_step2_optimize": {
+        "en": "STEP 2 — run in PowerShell as admin (needs Hyper-V "
+        "management tools):",
+        "zh": "第 2 步——管理员 PowerShell 执行（需 Hyper-V 管理工具）：",
+    },
+    "wsl_vhdx_cli_step2_diskpart": {
+        "en": "STEP 2 — Optimize-VHD is unavailable (Hyper-V management "
+        "tools not installed). Run diskpart as admin and paste:",
+        "zh": "第 2 步——Optimize-VHD 不可用（未装 Hyper-V 管理工具）。"
+        "管理员身份运行 diskpart，逐行粘贴：",
+    },
+    "wsl_vhdx_cli_note": {
+        "en": "note: deleting files inside docker never shrinks this vhdx — "
+        "the space is only returned by compacting (the suitcase keeps its "
+        "size until you squeeze it). Docker restarts on next launch.",
+        "zh": "提示：docker 里删文件不会缩小这个 vhdx——空间只有压箱才真正"
+        "还给系统（行李箱不挤一下不会变小）。Docker 下次启动时自行恢复。",
     },
     # --- playwright probe ----------------------------------------------------
     "pw_orphan_label": {
