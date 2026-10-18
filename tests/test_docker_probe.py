@@ -32,9 +32,28 @@ PS_SAMPLE = "\n".join(
 )
 
 
+IMAGES_SAMPLE = "\n".join(
+    [
+        # single-version image in normal use — must NOT be listed
+        '{"Repository":"alpine","Tag":"3.19","ID":"c1aaabc123",'
+        '"Size":"7.8MB","CreatedSince":"2 months ago"}',
+        # retired versions of one repo: old + new pinned side by side
+        '{"Repository":"ghcr.io/owner/app","Tag":"v1.2","ID":"aa11bb22cc3",'
+        '"Size":"900MB","CreatedSince":"3 weeks ago"}',
+        '{"Repository":"ghcr.io/owner/app","Tag":"v2.0","ID":"bb22cc33dd4",'
+        '"Size":"1.2GB","CreatedSince":"4 days ago"}',
+        # dangling layer: upgrade orphan
+        '{"Repository":"<none>","Tag":"<none>","ID":"dd44ee55ff6",'
+        '"Size":"850MB","CreatedSince":"3 weeks ago"}',
+    ]
+)
+
+
 def _fake_docker(cmd: list[str]) -> subprocess.CompletedProcess[str]:
     if cmd[1] == "ps":
         return _cp(PS_SAMPLE)
+    if cmd[1] == "images":
+        return _cp(IMAGES_SAMPLE)
     return _cp(DF_SAMPLE)
 
 
@@ -53,10 +72,23 @@ def test_probe_happy_path_risk_graded():
     # aggregates
     assert by_key["docker/volumes"].risk is Risk.REPORT_ONLY
     assert "never cleans volumes" in by_key["docker/volumes"].detail
-    assert by_key["docker/images-reclaimable"].risk is Risk.REPORT_ONLY
-    assert "per-image selection" in by_key["docker/images-reclaimable"].detail
     assert by_key["docker/build-cache"].risk is Risk.CLEANABLE
     assert by_key["docker/build-cache"].size_bytes == 1_500_000_000
+    # per-image rows replaced the old blanket report-only aggregate
+    assert "docker/images-reclaimable" not in by_key
+    # dangling layer: cleanable AND preselected (deleting costs a re-pull)
+    dangling = by_key["docker/image/dd44ee55ff6"]
+    assert dangling.risk is Risk.CLEANABLE
+    assert dangling.preselect is True
+    assert dangling.size_bytes == 850_000_000
+    # retired versions: cleanable, NOT preselected (user picks the live one)
+    old = by_key["docker/image/aa11bb22cc3"]
+    new = by_key["docker/image/bb22cc33dd4"]
+    assert old.risk is Risk.CLEANABLE and old.preselect is False
+    assert new.risk is Risk.CLEANABLE and new.preselect is False
+    assert old.size_bytes == 900_000_000 and new.size_bytes == 1_200_000_000
+    # single-version image in use: not our business, never listed
+    assert not any(f.key == "docker/image/c1aaabc123" for f in findings)
     # per-container: individually selectable, each with the loud warning
     bench = by_key["docker/container/test-bench"]
     assert bench.risk is Risk.CLEANABLE
@@ -144,3 +176,46 @@ def test_container_label_drops_registry_host():
     label = next(f.label for f in findings if f.key.startswith("docker/container/"))
     assert "n8n:latest" in label
     assert "docker.n8n.io" not in label
+
+
+def test_image_listing_failure_is_report_only():
+    def flaky(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+        if cmd[1] == "images":
+            return _cp("", rc=1)
+        if cmd[1] == "ps":
+            return _cp(PS_SAMPLE)
+        return _cp(DF_SAMPLE)
+
+    findings = probe(runner=flaky)
+    by_key = {f.key: f for f in findings}
+    assert "docker/images-error" in by_key
+    assert by_key["docker/images-error"].risk is Risk.REPORT_ONLY
+
+
+def test_multi_tag_one_image_is_one_finding():
+    """Same image id under two tags is one row (docker prints one line per
+    tag) — no double counting in the summary bar."""
+    sample = "\n".join(
+        [
+            '{"Repository":"app","Tag":"v1","ID":"ff11ff11ff1",'
+            '"Size":"10MB","CreatedSince":"1 day ago"}',
+            '{"Repository":"app","Tag":"latest","ID":"ff11ff11ff1",'
+            '"Size":"10MB","CreatedSince":"1 day ago"}',
+            '{"Repository":"app","Tag":"v0","ID":"ee22ee22ee2",'
+            '"Size":"9MB","CreatedSince":"1 year ago"}',
+        ]
+    )
+
+    def run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+        if cmd[1] == "images":
+            return _cp(sample)
+        if cmd[1] == "ps":
+            return _cp("")
+        return _cp(DF_SAMPLE)
+
+    findings = probe(runner=run)
+    image_rows = [f for f in findings if f.key.startswith("docker/image/")]
+    assert sorted(f.key for f in image_rows) == [
+        "docker/image/ee22ee22ee2",
+        "docker/image/ff11ff11ff1",
+    ]

@@ -78,9 +78,13 @@ def _parse_rows(stdout: str) -> list[_Row]:
 
 
 def _findings_from_rows(rows: list[_Row]) -> list[Finding]:
-    """Aggregate rows: volumes/images/build-cache. Containers are NOT here —
+    """Aggregate rows: volumes/build-cache. Containers are NOT here —
     they are per-container findings from `docker ps` (user selects each one;
-    deleting a container is removing the thing itself, not a cache)."""
+    deleting a container is removing the thing itself, not a cache).
+    Images are NOT here either — per-image findings from `docker images`
+    replaced the old blanket report-only aggregate (the aggregate could
+    only say "17 images, 2.1GB reclaimable"; the per-image list lets the
+    user point at exactly which retired images go)."""
     findings: list[Finding] = []
     for r in rows:
         if r.type == "Local Volumes":
@@ -90,16 +94,6 @@ def _findings_from_rows(rows: list[_Row]) -> list[Finding]:
                     label=t("dock_volumes_label"),
                     size_bytes=r.size_bytes,
                     detail=t("dock_volumes_detail", n=r.count),
-                    risk=Risk.REPORT_ONLY,
-                )
-            )
-        elif r.type == "Images":
-            findings.append(
-                Finding(
-                    key=keys.DOCKER_IMAGES,
-                    label=t("dock_images_label"),
-                    size_bytes=r.reclaimable_bytes,
-                    detail=t("dock_images_detail"),
                     risk=Risk.REPORT_ONLY,
                 )
             )
@@ -193,6 +187,113 @@ def _stdout_or_raise(cp: subprocess.CompletedProcess[str], cmd_name: str) -> str
     return cp.stdout
 
 
+# per-image: only RETIRED images are listed (dangling layers + extra
+# versions of a repository that has more than one). A single-version image
+# in normal use is none of our business — listing it would nag.
+_IMAGES_CMD = ["docker", "images", "--format", "{{json .}}"]
+
+
+@dataclass(frozen=True)
+class _ImageRow:
+    repository: str
+    tag: str
+    image_id: str
+    size_bytes: int
+    created_since: str
+
+
+def _parse_image_rows(stdout: str) -> list[_ImageRow]:
+    rows: list[_ImageRow] = []
+    for line in stdout.splitlines():
+        if not line.strip():
+            continue
+        d = json.loads(line)
+        rows.append(
+            _ImageRow(
+                repository=str(d.get("Repository", "")),
+                tag=str(d.get("Tag", "")),
+                image_id=str(d.get("ID", "")),
+                size_bytes=parse_size(str(d.get("Size", ""))),
+                created_since=str(d.get("CreatedSince", "")),
+            )
+        )
+    return rows
+
+
+def _images_error(detail: str) -> Finding:
+    return Finding(
+        key=keys.DOCKER_IMAGES_ERROR,
+        label=t("dock_images_error_label"),
+        size_bytes=0,
+        detail=detail,
+        risk=Risk.REPORT_ONLY,
+    )
+
+
+def _image_findings(run: RunFn) -> list[Finding]:
+    """One finding per retired image, CLEANABLE and user-selected.
+
+    - dangling (`<none>:<none>`): an untagged leftover layer — typically
+      the OLD version after an upgrade. Deleting costs at most a re-pull,
+      so the row starts CHECKED (preselect); the confirm gate still asks.
+    - multi-version repository: every version is listed but NONE is
+      preselected — only the user knows which version is the live one.
+
+    Safety: the action is `docker rmi <id>` WITHOUT -f. An image still
+    referenced by any container (running or stopped) refuses removal
+    naturally; rmi never touches volumes (AGENTS.md hard boundary 1)."""
+    try:
+        cp = run(_IMAGES_CMD)
+    except subprocess.TimeoutExpired:
+        return [_images_error(t("dock_images_timeout"))]
+    if cp.returncode != 0:
+        return [_images_error(t("dock_images_failed", rc=cp.returncode))]
+    rows = _parse_image_rows(_stdout_or_raise(cp, "docker images"))
+
+    # same image can span several rows (one per tag) — group by id first
+    by_id: dict[str, list[_ImageRow]] = {}
+    for r in rows:
+        if r.image_id:
+            by_id.setdefault(r.image_id, []).append(r)
+    # repository -> distinct image ids: >1 means retired versions pile up
+    repo_ids: dict[str, set[str]] = {}
+    for r in rows:
+        if r.repository and r.repository != "<none>":
+            repo_ids.setdefault(r.repository, set()).add(r.image_id)
+    retired_repos = {repo for repo, ids in repo_ids.items() if len(ids) > 1}
+
+    findings: list[Finding] = []
+    for image_id, group in sorted(by_id.items()):
+        first = group[0]
+        if first.repository == "<none>":
+            findings.append(
+                Finding(
+                    key=f"{keys.DOCKER_IMAGE_PREFIX}{image_id}",
+                    label=t("dock_image_dangling_label", id=image_id[:10]),
+                    size_bytes=first.size_bytes,
+                    detail=t("dock_image_dangling_detail", since=first.created_since),
+                    risk=Risk.CLEANABLE,
+                    preselect=True,
+                )
+            )
+        elif first.repository in retired_repos:
+            findings.append(
+                Finding(
+                    key=f"{keys.DOCKER_IMAGE_PREFIX}{image_id}",
+                    label=t("dock_image_label", name=f"{first.repository}:{first.tag}"),
+                    size_bytes=first.size_bytes,
+                    detail=t(
+                        "dock_image_retired_detail",
+                        repo=first.repository,
+                        n=len(repo_ids[first.repository]),
+                        since=first.created_since,
+                    ),
+                    risk=Risk.CLEANABLE,
+                )
+            )
+    return findings
+
+
 @register("docker")
 def probe(runner: RunFn | None = None) -> list[Finding]:
     """runner param exists for tests (canned CompletedProcess injection)."""
@@ -223,4 +324,5 @@ def probe(runner: RunFn | None = None) -> list[Finding]:
         ]
     findings = _findings_from_rows(_parse_rows(_stdout_or_raise(cp, "docker system df")))
     findings.extend(_container_findings(run))
+    findings.extend(_image_findings(run))
     return findings

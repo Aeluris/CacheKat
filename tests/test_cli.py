@@ -75,3 +75,52 @@ def test_table_marks_report_only(tmp_path: Path):
     f = Finding(key="v/ol", label="volumes", size_bytes=5, detail="d", risk=Risk.REPORT_ONLY)
     assert "!" in format_table([f])
     assert '"report-only"' in to_json([f])
+
+
+# --- cachekat vhdx ----------------------------------------------------------
+
+
+def test_vhdx_report_optimize_path(tmp_path: Path):
+    from cachekat.cli import vhdx_report
+
+    vhdx = tmp_path / "Docker" / "wsl" / "disk" / "docker_data.vhdx"
+    vhdx.parent.mkdir(parents=True)
+    vhdx.write_bytes(b"x" * 2048)
+
+    report = vhdx_report(str(tmp_path), optimize_available=True)
+    assert str(vhdx) in report
+    assert "wsl --shutdown" in report  # step 1: the full-stop warning
+    assert 'Optimize-VHD -Path "' in report
+    assert "diskpart" not in report
+
+
+def test_vhdx_report_diskpart_fallback(tmp_path: Path):
+    """No Hyper-V management tools -> diskpart script, never a crash."""
+    from cachekat.cli import vhdx_report
+
+    vhdx = tmp_path / "Docker" / "data" / "ext4.vhdx"
+    vhdx.parent.mkdir(parents=True)
+    vhdx.write_bytes(b"x" * 512)
+
+    report = vhdx_report(str(tmp_path), optimize_available=False)
+    assert f'select vdisk file="{vhdx}"' in report
+    assert "compact vdisk" in report
+    assert "detach vdisk" in report
+    # the fallback NOTICE names Optimize-VHD (it explains why); the
+    # COMMAND must not appear — diskpart is the only path offered
+    assert "Optimize-VHD -Path" not in report
+
+
+def test_vhdx_report_missing_disk_is_honest(tmp_path: Path):
+    from cachekat.cli import vhdx_report
+
+    report = vhdx_report(str(tmp_path), optimize_available=True)
+    assert "no Docker Desktop vhdx found" in report
+
+
+def test_vhdx_cli_off_windows_says_so(capsys: pytest.CaptureFixture[str], monkeypatch):
+    # sys.platform, not os.name — patching os.name poisons pathlib
+    monkeypatch.setattr("sys.platform", "linux")
+    rc = main(["vhdx", "--lang", "en"])
+    assert rc == 0
+    assert "Windows-only" in capsys.readouterr().out

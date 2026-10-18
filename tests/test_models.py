@@ -8,8 +8,9 @@ from cachekat.models import Finding, Risk
 def test_risk_values_are_frozen_contract():
     # wire format for JSON/tests; changing these is a breaking change
     assert Risk.CLEANABLE.value == "cleanable"
+    assert Risk.MAINTENANCE.value == "maintenance"
     assert Risk.REPORT_ONLY.value == "report-only"
-    assert len(Risk) == 2
+    assert len(Risk) == 3
 
 
 def test_finding_is_immutable():

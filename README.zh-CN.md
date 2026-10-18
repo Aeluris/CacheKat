@@ -30,7 +30,8 @@
 |---|---|
 | 真缓存（pip、npm、playwright 孤儿、docker 构建缓存） | 可勾选清理——每条在执行前都写明白人话后果 |
 | **docker 卷（你的数据）** | **只报不动，永不清理，没有旗标能解锁** |
-| docker 停止容器／未用镜像 | 容器：**逐个勾选**，每条警示 `docker rm` 删除的是容器**本体**而非缓存（可用 `docker run`/`compose up` 重建，卷不受影响）。镜像：逐镜像勾选上线前只报不动。 |
+| docker 停止容器／退役镜像 | **逐条勾选**。容器：每条警示 `docker rm` 删除的是容器**本体**而非缓存（可用 `docker run`/`compose up` 重建，卷不受影响）。镜像：悬空层与同仓库多版本残留逐镜像列出，每条由各自的 `docker rmi` **不带 `-f`** 删除——仍被容器引用的镜像会被 docker 自己拒绝。 |
+| **Docker Desktop WSL2 磁盘（vhdx）——维护** | 可勾选、**不删任何数据**：压箱把 vhdx 内部空隙还给 Windows。确认门带三警示（管理员权限／全部 WSL 停止／耗时数分钟）。工具执行停机＋生成自提权脚本；运行脚本（自带 UAC 征求同意）由你点击，工具不代跑。 |
 | 探针判不了的 | 诚实只报（“判不了活性”），绝不瞎猜 |
 
 - 扫描永远只读；清理必须是显式勾选＋确认门。
@@ -51,6 +52,7 @@ pipx install cachekat
 cachekat tui             # 交互式：扫描 -> 勾选 -> 确认 -> 清理
 cachekat scan            # 只读报告：谁在吃磁盘
 cachekat scan --json     # 机器可读
+cachekat vhdx            # Windows：Docker Desktop 磁盘大小＋压箱命令清单
 # 所有命令支持 --lang auto|en|zh（auto 跟随系统语言）
 ```
 
